@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Le CERS - Carte Interactive</title>
+    <!-- Chargement rapide de Tailwind CSS pour le style de l'interface -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      /* Assure que l'application prend bien toute la hauteur de l'écran */
+      html, body, #root {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50">
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
