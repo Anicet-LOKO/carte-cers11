@@ -22,7 +22,7 @@ export default function App() {
     }
   }, []);
 
-  // 2. Filtrage simple (Recherche + Catégorie) [4]
+  // 2. Filtrage simple (Recherche + Catégorie)
   const filtres = useMemo(() => {
     return commerces.filter(c => 
       (categorie === "Tous" || c.category === categorie) &&
@@ -30,7 +30,7 @@ export default function App() {
     );
   }, [commerces, categorie, recherche]);
 
-  // 3. Gestion des marqueurs sur la carte [5]
+  // 3. Gestion des marqueurs sur la carte
   useEffect(() => {
     markersRef.current.forEach(m => m.remove());
     filtres.forEach(c => {
@@ -44,7 +44,7 @@ export default function App() {
       {/* --- BARRE LATÉRALE --- */}
       <aside className="w-80 flex flex-col border-r shadow-lg z-20 bg-white">
         
-        {/* Header avec image des billets CERS [1] */}
+        {/* Header avec image des billets CERS */}
         <header 
           className="relative p-10 text-white text-center font-bold bg-cover bg-center"
           style={{ backgroundImage: "url('/monnaie_CERS.jpg')" }}
@@ -52,11 +52,11 @@ export default function App() {
           <div className="absolute inset-0 bg-black/50"></div> {/* Voile pour lisibilité */}
           <div className="relative z-10">
             <h1 className="tracking-widest text-xl">RÉSEAU CERS</h1>
-            <p className="text-[9px] uppercase opacity-80">Monnaie locale complémentaire citoyenne</p>
+            <h2 className="text-[9px] uppercase opacity-80">Monnaie locale complémentaire citoyenne</h2>
           </div>
         </header>
         
-        {/* Recherche et Filtres [5] */}
+        {/* Recherche et Filtres */}
         <div className="p-4 space-y-3">
           <input 
             className="w-full p-2 bg-gray-100 rounded text-sm outline-none focus:ring-2 focus:ring-blue-400" 
@@ -73,13 +73,13 @@ export default function App() {
           </div>
         </div>
 
-        {/* Liste des commerces [6] */}
+        {/* Liste des commerces */}
         <ul className="flex-1 overflow-y-auto divide-y">
           {filtres.map(c => (
             <li key={c.id} onClick={() => { setSelection(c); mapInstance.current.setView([c.lat, c.lng], 15); }} 
               className={`p-4 cursor-pointer hover:bg-blue-50 ${selection?.id === c.id ? 'bg-blue-50 border-l-4 border-blue-600' : ''}`}>
               <h3 className="font-bold text-sm uppercase">{c.title}</h3>
-              <p className="text-[10px] text-gray-400">📍 {c.address}</p>
+              <p className="text-[10px] text-gray-400"> {c.address}</p>
             </li>
           ))}
         </ul>
@@ -89,16 +89,16 @@ export default function App() {
       <main className="flex-1 relative">
         <div ref={mapRef} className="h-full w-full z-0" />
         
-        {/* Fiche de résumé (Devant la carte grâce au z-index élevé) [2, 3] */}
+        {/* Fiche de résumé (Devant la carte grâce au z-index élevé) */}
         {selection && (
           <article className="absolute bottom-6 left-6 z- bg-white p-6 rounded-2xl shadow-2xl w-80 border border-gray-100 animate-in fade-in slide-in-from-bottom-4">
             <h2 className="font-black text-xl mb-1">{selection.title}</h2>
             <p className="text-xs text-gray-500 italic mb-4">"{selection.description || 'Commerce de proximité'}"</p>
             
             <div className="text-[11px] text-gray-600 space-y-1 mb-6">
-              <p>📍 {selection.address}</p>
-              <p>👤 <b>Responsable :</b> {selection.responsable}</p>
-              {selection.phone && <p>📞 <b>Tél :</b> {selection.phone}</p>}
+              <p>{selection.address}</p>
+              <p><b>Responsable :</b> {selection.responsable}</p>
+              {selection.phone && <p> <b>Tél :</b> {selection.phone}</p>}
             </div>
 
             <div className="flex gap-2">
