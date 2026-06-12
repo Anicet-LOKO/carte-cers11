@@ -3,55 +3,60 @@ import json
 import time
 from geopy.geocoders import Nominatim
 
-# Configuration d'un agent utilisateur simple pour OpenStreetMap
-geolocator = Nominatim(user_agent="just_echanges_map")
+# Initialisation du géocodeur
+geolocator = Nominatim(user_agent="cers_app_final")
 
-def geocode_commerces(excel_path="commerçants_justechanges.xlsx", output_json="commerces_geocodes.json"):
-    try:
-        df = pd.read_excel(excel_path)
-    except Exception as e:
-        print(f"Impossible de lire le fichier Excel : {e}")
-        return
-
-    commerces_list = []
+def generate_json():
+    # Chargement du fichier liste_test.xlsx
+    df = pd.read_excel("liste_test.xlsx")
     
-    for index, row in df.iterrows():
-        nom = row.get('nom', 'Commerce sans nom')
-        adresse = str(row.get('adresse', ''))
-        
-        # On force "Narbonne" si l'adresse est trop vague pour aider le moteur de recherche
-        requete_adresse = adresse if "narbonne" in adresse.lower() else f"{adresse}, Narbonne, France"
-        print(f"[{index + 1}/{len(df)}] Recherche de coordonnées pour : {nom}")
+    # Nettoyage des noms de colonnes pour éviter les espaces invisibles
+    df.columns = df.columns.str.strip()
+    
+    commerces_propres = []
 
-        # Coordonnées par défaut (Narbonne) si la recherche échoue
-        lat, lng = 43.1833, 3.0000 
+    for index, row in df.iterrows():
+        # Extraction basée sur tes noms de colonnes
+        title = str(row['Etablissement']).strip()
+        manager = str(row['Responsable']).strip()
+        city = str(row['Ville']).strip()
+        cp = str(int(row['CP'])) if pd.notnull(row['CP']) else ""
         
+        # Gestion des numéros de téléphone: on privilégie le portable, sinon le fixe
+        phone = str(row['Tel port']) if pd.notnull(row['Tel port']) else str(row['Tel fixe'])
+        
+        # Reconstruction de l'adresse pour le géocodage
+        num = str(row['Num de Rue']) if pd.notnull(row['Num de Rue']) else ""
+        rue = str(row['Adresse']) if pd.notnull(row['Adresse']) else ""
+        full_address = f"{num} {rue}, {cp} {city}, France"
+        
+        print(f"Géocodage de : {title}...")
+        lat, lng = None, None
         try:
-            time.sleep(1) # Pause d'une seconde requise par la charte d'utilisation d'OSM
-            location = geolocator.geocode(requete_adresse)
+            location = geolocator.geocode(full_address)
             if location:
                 lat, lng = location.latitude, location.longitude
-        except Exception:
-            pass # Si l'API échoue temporairement, on garde la position par défaut
+            time.sleep(1.0) 
+        except:
+            pass
 
-        # Structuration propre pour l'application React
-        commerces_list.append({
+        commerces_propres.append({
             "id": index + 1,
-            "title": nom,
-            "category": str(row.get('categorie', 'Autre')),
-            "address": adresse,
+            "title": title,
+            "manager": manager,
+            "category": str(row['Categorie']),
+            "phone": phone,
+            "email": str(row['Mail']) if pd.notnull(row['Mail']) else "",
+            "address": f"{num} {rue}",
+            "cp": cp,
+            "city": city,
             "lat": lat,
-            "lng": lng,
-            "description": str(row.get('description', '')),
-            "phone": str(row.get('telephone', '')) if pd.notna(row.get('telephone')) else "",
-            "hours": str(row.get('horaires', '')) if pd.notna(row.get('horaires')) else "",
-            "website": str(row.get('web', '')) if pd.notna(row.get('web')) else ""
+            "lng": lng
         })
 
-    with open(output_json, 'w', encoding='utf-8') as f:
-        json.dump(commerces_list, f, ensure_ascii=False, indent=2)
-        
-    print(f"\nFichier JSON généré avec succès : {output_json}")
+    # Sauvegarde dans le dossier public de ton projet React
+    with open('commerces-ordonnes.json', 'w', encoding='utf-8') as f:
+        json.dump(commerces_propres, f, ensure_ascii=False, indent=4)
+    print("\nFichier JSON généré avec succès dans public/ !")
 
-if __name__ == "__main__":
-    geocode_commerces()
+generate_json()
