@@ -1,22 +1,15 @@
-<!DOCTYPE html>
-<html lang="fr">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LA MONNAIE CERS</title>
-    <!-- 1. CSS de Leaflet -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- 2. Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-      html, body, #root { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; }
-      .leaflet-container { height: 100%; width: 100%; background: #f8fafc; }
-    </style>
-  </head>
-  <body>
-    <div id="root"></div>
-    <!-- 3. JS de Leaflet (Indispensable AVANT le main.jsx) -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
-</html>
+/* Styles de base pour occuper tout l'écran */
+html, body, #root { 
+  margin: 0; 
+  padding: 0; 
+  height: 100%; 
+  width: 100%; 
+  overflow: hidden; 
+  font-family: sans-serif;
+}
+
+.leaflet-container { 
+  height: 100%; 
+  width: 100%; 
+  background-color: #f8fafc; 
+}
