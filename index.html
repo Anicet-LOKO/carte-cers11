@@ -4,19 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Réseau CERS - Carte Interactive</title>
-    <!-- CSS de Leaflet (Indispensable pour l'affichage) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <!-- Tailwind CSS via CDN pour le style rapide -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-      html, body, #root { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; }
-      .leaflet-container { height: 100%; width: 100%; }
-    </style>
+    <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script defer type="module" src="/src/main.jsx"></script>
   </head>
   <body>
     <div id="root"></div>
-    <!-- JS de Leaflet -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
