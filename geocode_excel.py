@@ -3,60 +3,67 @@ import json
 import time
 from geopy.geocoders import Nominatim
 
-# Initialisation du géocodeur
-geolocator = Nominatim(user_agent="cers_app_final")
+geolocator = Nominatim(user_agent="cers_app_production")
 
 def generate_json():
-    # Chargement du fichier liste_test.xlsx
-    df = pd.read_excel("liste_test.xlsx")
-    
-    # Nettoyage des noms de colonnes pour éviter les espaces invisibles
-    df.columns = df.columns.str.strip()
-    
-    commerces_propres = []
+    try:
+        df = pd.read_excel("liste_test.xlsx")
+        df.columns = df.columns.str.strip()
+    except FileNotFoundError:
+        print("Erreur : 'liste_test.xlsx' non trouvé dans le dossier.")
+        return
 
+    commerces_propres = []
     for index, row in df.iterrows():
-        # Extraction basée sur tes noms de colonnes
-        title = str(row['Etablissement']).strip()
-        manager = str(row['Responsable']).strip()
-        city = str(row['Ville']).strip()
-        cp = str(int(row['CP'])) if pd.notnull(row['CP']) else ""
+        # Extraction des données selon votre structure Excel [1]
+        etablissement = str(row.get('Etablissement', '')).strip()
+        responsable = str(row.get('Responsable', '')).strip()
+        comptoir = str(row.get('Comptoir', 'Non')).strip()
+        categorie = str(row.get('Categorie', '')).strip()
         
-        # Gestion des numéros de téléphone: on privilégie le portable, sinon le fixe
-        phone = str(row['Tel port']) if pd.notnull(row['Tel port']) else str(row['Tel fixe'])
+        # Nettoyage des formats numériques Excel
+        tel = str(row.get('Tel port', '')).replace(".0", "").strip()
+        if tel == 'nan': tel = ""
         
-        # Reconstruction de l'adresse pour le géocodage
-        num = str(row['Num de Rue']) if pd.notnull(row['Num de Rue']) else ""
-        rue = str(row['Adresse']) if pd.notnull(row['Adresse']) else ""
+        liens = str(row.get('Liens', '')).strip()
+        mail = str(row.get('Mail', '')).strip()
+        pourquoi = str(row.get('Pourquoi le CERS', '')).strip()
+        
+        city = str(row.get('Ville', '')).strip()
+        cp = str(row.get('CP', '')).replace(".0", "")
+        num = str(row.get('Num de Rue', '')).replace(".0", "")
+        rue = str(row.get('Adresse', '')).strip()
+        
+        # Géocodage
         full_address = f"{num} {rue}, {cp} {city}, France"
-        
-        print(f"Géocodage de : {title}...")
         lat, lng = None, None
         try:
-            location = geolocator.geocode(full_address)
+            location = geolocator.geocode(full_address, timeout=10)
             if location:
                 lat, lng = location.latitude, location.longitude
-            time.sleep(1.0) 
+            time.sleep(1.1) # Respect de la charte Nominatim [Source CM1]
         except:
             pass
 
         commerces_propres.append({
             "id": index + 1,
-            "title": title,
-            "manager": manager,
-            "category": str(row['Categorie']),
-            "phone": phone,
-            "email": str(row['Mail']) if pd.notnull(row['Mail']) else "",
-            "address": f"{num} {rue}",
+            "etablissement": etablissement,
+            "responsable": responsable,
+            "comptoir": comptoir,
+            "categorie": categorie,
+            "tel": tel,
+            "mail": mail,
+            "adresse": f"{num} {rue}",
             "cp": cp,
-            "city": city,
+            "ville": city,
+            "liens": liens,
+            "pourquoi_cers": pourquoi,
             "lat": lat,
             "lng": lng
         })
 
-    # Sauvegarde dans le dossier public de ton projet React
     with open('commerces-ordonnes.json', 'w', encoding='utf-8') as f:
         json.dump(commerces_propres, f, ensure_ascii=False, indent=4)
-    print("\nFichier JSON généré avec succès dans public/ !")
 
-generate_json()
+if __name__ == "__main__":
+    generate_json()
