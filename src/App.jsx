@@ -79,7 +79,7 @@ export default function App() {
       <aside className="sidebar">
         <header className="sidebar-header">
           <div className="header-overlay" />
-          <div className="header-content"><h1>Réseau CERS</h1><p>Monnaie Locale Communautaire Citoyenne</p></div>
+          <div className="header-content"><h1>Réseau CERS</h1><p>Monnaie Locale Complementaire Citoyenne</p></div>
         </header>
 
         <section className="filters-section">
