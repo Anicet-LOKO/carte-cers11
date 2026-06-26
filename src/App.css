@@ -1,265 +1,56 @@
-/* --- STRUCTURE GÉNÉRALE --- */
-.app-container { 
-  display: flex; 
-  height: 100vh; 
-  width: 100%; 
-  overflow: hidden; 
-  font-family: sans-serif; 
-}
+.app-container { display: flex; height: 100vh; width: 100%; overflow: hidden; font-family: sans-serif; }
 
-/* --- CORRECTIF RESPONSIVE MOBILE [Source conversation] --- */
+/* RESPONSIVE MOBILE */
 @media (max-width: 768px) {
-  .app-container { 
-    flex-direction: column; 
-  }
-  .sidebar { 
-    width: 100% !important; 
-    height: 45vh !important; /* La liste prend 45% de l'écran sur mobile */
-    border-right: none;
-    border-bottom: 1px solid #e2e8f0;
-  }
-  .sidebar-header {
-    height: 8rem !important; 
-  }
-  .header-content h1 {
-    font-size: 1.2rem !important;
-  }
-  .map-area { 
-    height: 55vh !important; /* La carte prend le reste de l'écran */
-    flex: none; 
-  }
-  .detail-card {
-    left: 10px !important;
-    right: 10px !important;
-    bottom: 10px !important;
-    max-width: none !important;
-    padding: 15px !important;
-  }
+  .app-container { flex-direction: column; }
+  .sidebar { width: 100% !important; height: 45vh !important; border-right: none; }
+  .map-area { height: 55vh !important; flex: none; }
+  .sidebar-header { height: 6rem !important; }
 }
 
-/* --- BARRE LATÉRALE (ASIDE) --- */
-.sidebar { 
-  width: 384px; 
-  display: flex; 
-  flex-direction: column; 
-  border-right: 1px solid #e2e8f0; 
-  z-index: 20; 
-  background: white; 
-}
+/* SIDEBAR & HEADER */
+.sidebar { width: 384px; display: flex; flex-direction: column; border-right: 1px solid #e2e8f0; background: white; z-index: 20; }
+.sidebar-header { position: relative; height: 10rem; flex-shrink: 0; background-image: url('/monnaie_CERS.jpg'); background-size: cover; background-position: center; }
+.header-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.4); }
+.header-content { position: relative; z-index: 10; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
+.header-content h1 { font-size: 1.6rem; font-weight: 900; text-transform: uppercase; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8)); }
 
-.sidebar-header {
-  position: relative; 
-  height: 12rem; 
-  flex-shrink: 0; 
-  background-image: url('/monnaie_CERS.jpg'); /* Image des billets CERS [Source 137] */
-  background-size: cover; 
-  background-position: center;
-}
+/* FILTRES */
+.filters-section { padding: 1rem; border-bottom: 1px solid #f1f5f9; background: #f8fafc; }
+.search-box { position: relative; margin-bottom: 0.75rem; }
+.search-icon { position: absolute; left: 0.75rem; top: 0.75rem; color: #94a3b8; }
+.search-box input { width: 100%; padding: 0.5rem 1rem 0.5rem 2.5rem; border: 1px solid #e2e8f0; border-radius: 8px; outline: none; font-size: 13px; }
 
-.header-overlay { 
-  position: absolute; 
-  inset: 0; 
-  background: rgba(0,0,0,0.4); 
-}
+/* BOUTONS PRINCIPAUX */
+.main-nav { display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.75rem; }
+.cat-btn { padding: 5px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; border: 1px solid #e2e8f0; background: white; color: #64748b; cursor: pointer; white-space: nowrap; }
+.cat-btn.active { background: #0f172a; color: white; border-color: #0f172a; }
 
-.header-content { 
-  position: relative; 
-  z-index: 10; 
-  height: 100%; 
-  display: flex; 
-  flex-direction: column; 
-  align-items: center; 
-  justify-content: center; 
-  color: white; 
-}
+/* BOUTONS SOUS-CATÉGORIES (Descriptions) [Conversation] */
+.sub-nav { display: flex; gap: 0.4rem; overflow-x: auto; border-top: 1px solid #e2e8f0; padding-top: 0.75rem; }
+.sub-btn { padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 600; border: 1px solid #cbd5e1; background: #f1f5f9; color: #475569; cursor: pointer; white-space: nowrap; transition: all 0.2s; }
+.sub-btn:hover { background: #e2e8f0; }
+.sub-btn.active { background: #3b82f6; color: white; border-color: #3b82f6; }
 
-.header-content h1 { 
-  font-size: 1.8rem; 
-  font-weight: 900; 
-  text-transform: uppercase; 
-  letter-spacing: 0.15em; 
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.8)); 
-}
-
-/* --- FILTRES ET RECHERCHE --- */
-.filters-section { 
-  padding: 1rem; 
-  border-bottom: 1px solid #f1f5f9; 
-  background: #f8fafc; 
-}
-
-.search-box { 
-  position: relative; 
-  margin-bottom: 0.75rem; 
-}
-
-.search-icon { 
-  position: absolute; 
-  left: 0.75rem; 
-  top: 0.75rem; 
-  color: #94a3b8; 
-}
-
-.search-box input { 
-  width: 100%; 
-  padding: 0.6rem 1rem 0.6rem 2.5rem; 
-  border: 1px solid #e2e8f0; 
-  border-radius: 12px; 
-  font-size: 14px; 
-  outline: none; 
-}
-
-.categories-nav { 
-  display: flex; 
-  gap: 0.5rem; 
-  overflow-x: auto; 
-  padding-bottom: 8px; 
-}
-
-.cat-btn { 
-  padding: 4px 12px; 
-  border-radius: 20px; 
-  font-size: 10px; 
-  font-weight: 700; 
-  border: 1px solid #e2e8f0; 
-  background: white; 
-  color: #64748b; 
-  cursor: pointer; 
-  white-space: nowrap; 
-  transition: 0.2s; 
-}
-
-.cat-btn.active { 
-  background: #0f172a; 
-  color: white; 
-  border-color: #0f172a; 
-}
-
-/* --- LISTE DES ÉTABLISSEMENTS --- */
-.merchants-list { 
-  flex: 1; 
-  overflow-y: auto; 
-  list-style: none; 
-  padding: 0; 
-  margin: 0; 
-}
-
-.merchants-list::-webkit-scrollbar { width: 6px; }
-.merchants-list::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
-
-.merchant-item { 
-  padding: 1.25rem; 
-  border-bottom: 1px solid #f1f5f9; 
-  cursor: pointer; 
-  transition: 0.2s; 
-}
-
+/* LISTE */
+.merchants-list { flex: 1; overflow-y: auto; list-style: none; padding: 0; }
+.merchant-item { padding: 1rem; border-bottom: 1px solid #f1f5f9; cursor: pointer; }
 .merchant-item:hover { background: #f8fafc; }
+.merchant-item.selected { background: #eff6ff; border-left: 4px solid #2563eb; }
 
-.merchant-item.selected { 
-  background: #eff6ff; 
-  border-left: 4px solid #2563eb; 
-}
+.merchant-summary { display: flex; flex-direction: column; gap: 6px; }
+.title-text { color: #0f172a; font-size: 13px; text-transform: uppercase; margin-bottom: 4px; }
+.summary-row { display: flex; align-items: center; gap: 8px; font-size: 11px; color: #475569; }
+.icon-blue { color: #3b82f6; flex-shrink: 0; }
+.pourquoi-text i { color: #64748b; font-size: 10.5px; line-height: 1.4; }
+.city-label { text-transform: uppercase; font-weight: 800; color: #1d4ed8; }
+.merchant-link { color: #2563eb; text-decoration: underline; font-weight: 600; }
 
-/* --- RÉSUMÉ ÉLÉGANT (ICÔNES ET LABELS) --- */
-.merchant-summary {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.summary-row { 
-  display: flex; 
-  align-items: flex-start; /* Aligne l'icône en haut si le texte est long */
-  gap: 10px; 
-  font-size: 11px; 
-  color: #475569; 
-}
-
-.title-row b {
-  color: #0f172a;
-  font-size: 12px;
-  text-transform: uppercase;
-}
-
-.icon-blue { 
-  color: #3b82f6; 
-  flex-shrink: 0; 
-}
-
-.city-label { 
-  text-transform: uppercase; 
-  font-weight: 700; 
-  color: #1d4ed8; 
-}
-
-.bio-row p {
-  line-height: 1.4;
-  color: #64748b;
-  font-style: italic;
-}
-
-.merchant-link {
-  color: #2563eb;
-  text-decoration: underline;
-  font-weight: 600;
-  font-size: 10.5px;
-}
-
-/* --- CARTE ET FICHE DÉTAILLÉE --- */
+/* CARTE & FICHE DETAIL */
 .map-area { flex: 1; position: relative; }
-
-.detail-card { 
-  position: absolute; 
-  bottom: 20px; 
-  left: 20px; 
-  right: 20px; 
-  max-width: 320px; 
-  background: white; 
-  padding: 20px; 
-  border-radius: 20px; 
-  box-shadow: 0 20px 25px rgba(0,0,0,0.1); 
-  z-index: 1000; 
-  border: 1px solid #f1f5f9;
-}
-
-.detail-card h2 { 
-  font-size: 18px; 
-  font-weight: 900; 
-  text-transform: uppercase; 
-  margin-bottom: 15px; 
-  color: #0f172a;
-}
-
-.route-btn { 
-  width: 100%; 
-  background: #0f172a; 
-  color: white; 
-  padding: 12px; 
-  border-radius: 12px; 
-  font-weight: 700; 
-  cursor: pointer; 
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  gap: 8px; 
-  text-transform: uppercase; 
-  font-size: 11px; 
-  border: none; 
-}
-
-/* --- BOUTON FERMER --- */
-.close-btn { 
-  position: absolute; 
-  top: 5px; 
-  right: 10px; 
-  background: none; 
-  border: none; 
-  font-size: 24px; 
-  color: #cbd5e1; 
-  cursor: pointer; 
-  z-index: 1010; 
-  line-height: 1;
-}
-
-.close-btn:hover { color: #94a3b8; }
+.leaflet-map { height: 100%; width: 100%; }
+.detail-card { position: absolute; bottom: 20px; left: 20px; right: 20px; max-width: 320px; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 10px 15px rgba(0,0,0,0.1); z-index: 1000; border: 1px solid #f1f5f9; }
+.detail-card h2 { font-size: 16px; font-weight: 900; text-transform: uppercase; margin-bottom: 12px; color: #0f172a; }
+.detail-info p { display: flex; align-items: center; gap: 8px; font-size: 12px; margin-bottom: 8px; color: #475569; }
+.route-btn { width: 100%; background: #0f172a; color: white; padding: 10px; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; text-transform: uppercase; font-size: 10px; border: none; margin-top: 10px; }
+.close-btn { position: absolute; top: 8px; right: 12px; background: none; border: none; font-size: 20px; color: #cbd5e1; cursor: pointer; }
