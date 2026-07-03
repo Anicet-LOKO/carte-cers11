@@ -21,7 +21,9 @@ def generate_json():
         centre_culturel = str(row.get('Centre Culturel', 'Non')).strip()
         alimentation = str(row.get('Alimentation', 'Non')).strip()
         service = str(row.get('Service', 'Non')).strip()
-        
+        bien_etre = str(row.get('Bien-Etre', 'Non')).strip()
+        comptoir_echange = str(row.get('Comptoir d\'Echange', 'Non')).strip()
+
         # La description remplace la catégorie
         description = str(row.get('Description', '')).strip()
         
@@ -48,6 +50,11 @@ def generate_json():
         except:
             pass
 
+        # Gestion des cas particuliers pour la mieillerie d'Alain
+        if "Craboules" in rue or etablissement == "La miellerie d'Alain":
+            if lat is None:
+                lat, lng = 43.1491, 3.0336
+
         commerces_propres.append({
             "id": index + 1,
             "etablissement": etablissement,
@@ -55,6 +62,8 @@ def generate_json():
             "centre_culturel": centre_culturel,
             "alimentation": alimentation,
             "service": service,
+            "bien_etre": bien_etre,
+            "comptoir_echange": comptoir_echange,
             "description": description,
             "tel": tel,
             "mail": mail,

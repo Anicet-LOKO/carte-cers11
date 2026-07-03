@@ -22,7 +22,7 @@
 .search-box input { width: 100%; padding: 0.5rem 1rem 0.5rem 2.5rem; border: 1px solid #e2e8f0; border-radius: 8px; outline: none; font-size: 13px; }
 
 /* BOUTONS PRINCIPAUX */
-.main-nav { display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.75rem; }
+.main-nav { display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.75rem; -webkit-overflow-scrolling: touch;}
 .cat-btn { padding: 5px 12px; border-radius: 6px; font-size: 11px; font-weight: 700; border: 1px solid #e2e8f0; background: white; color: #64748b; cursor: pointer; white-space: nowrap; }
 .cat-btn.active { background: #0f172a; color: white; border-color: #0f172a; }
 

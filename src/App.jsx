@@ -29,12 +29,12 @@ export default function App() {
     loadData();
   }, []);
 
-  const mainCategories = ["Tous", "Alimentation", "Centre Culturel", "Service"];
+  const mainCategories = ["Tous", "Alimentation", "Centre Culturel", "Service", "Bien-Etre", "Comptoir d'Echange"];
 
   // Génération des boutons de description selon la catégorie choisie
   const sousCategories = useMemo(() => {
     if (catActive === "Tous") return [];
-    const key = catActive.toLowerCase().replace(" ", "_");
+    const key = catActive.toLowerCase().replace(" ", "_").replace("d'e", "e").replace(/[ -\s]/g, "_");
     const descList = commerces
       .filter(c => c[key] === "Oui")
       .map(c => c.description)
@@ -47,11 +47,11 @@ export default function App() {
   const filtres = useMemo(() => {
     return (commerces || []).filter(c => {
       const searchTxt = recherche.toLowerCase().trim();
-      const matchSearch = [c.etablissement, c.ville, c.responsable, c.description].some(v => 
+      const matchSearch = [c.etablissement, c.ville, c.responsable, c.description, c.adresse, c.mail, c.tel, c.cp].some(v => 
         v?.toLowerCase().includes(searchTxt)
       );
       
-      const key = catActive.toLowerCase().replace(" ", "_");
+      const key = catActive.toLowerCase().replace(" ", "_").replace("d'e", "e").replace(/[ -\s]/g, "_");
       const matchCat = catActive === "Tous" || c[key] === "Oui";
       const matchSousCat = sousCatActive === "Toutes" || c.description === sousCatActive;
 
@@ -65,7 +65,7 @@ export default function App() {
     filtres.forEach((c) => {
       if (c.lat && c.lng) {
         const marker = window.L.marker([c.lat, c.lng]).addTo(mapInstance.current);
-        marker.bindTooltip(`<b>${c.etablissement}</b><br/>${c.ville}`, { direction: 'top', sticky: true });
+        marker.bindTooltip(`<b>${c.etablissement}</b></br>${c.adresse}<br/>${c.ville} ${c.cp}`, { direction: 'top', sticky: true });
         marker.on('click', () => { setSelection(c); mapInstance.current.setView([c.lat, c.lng], 16); });
         markersRef.current[c.id] = marker;
       }
