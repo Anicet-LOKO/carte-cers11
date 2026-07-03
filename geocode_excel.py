@@ -76,7 +76,7 @@ def generate_json():
             "lng": lng
         })
 
-    with open('commerces-ordonnes.json', 'w', encoding='utf-8') as f:
+    with open('public/commerces-ordonnes.json', 'w', encoding='utf-8') as f:
         json.dump(commerces_propres, f, ensure_ascii=False, indent=4)
 
 if __name__ == "__main__":
