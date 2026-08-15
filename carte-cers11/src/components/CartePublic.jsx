@@ -82,7 +82,7 @@ export default function App() {
     filtres.forEach((c) => {
       if (c.lat && c.lng) {
         const marker = window.L.marker([c.lat, c.lng]).addTo(mapInstance.current);
-        marker.bindTooltip(`<b>${c.etablissement}</b></br>${c.responsable}</br>${c.adresse}</br>${c.cp} ${c.ville}</br>`, { direction: 'top', sticky: true });
+        marker.bindTooltip(`<b>${c.etablissement}</b></br>${c.responsable}</br>${c.adresse} ${c.cp} ${c.ville}</br>`, { direction: 'top', sticky: true });
         marker.on('click', () => { setSelection(c); mapInstance.current.setView([c.lat, c.lng], 16); });
         markersRef.current[c.id] = marker;
       }

@@ -23,30 +23,43 @@ export default function FormulaireProdacteur({ target, onSuccess, onCancel }) {
 
   // --- 3. RÉCUPÉRATION AUTOMATIQUE DE LA VILLE (API GOUV) ---
   // Dès que le CP fait 5 chiffres, on cherche la ville correspondante
-  useEffect(() => {
-    const fetchVille = async () => {
-      // On ne lance la recherche que si on a exactement 5 chiffres
-      if (formData.cp && /^\d{5}$/.test(formData.cp)) {
-        try {
-          const res = await fetch(`https://api-adresse.data.gouv.fr/search/?q=${formData.cp}&type=municipality&limit=1`);
-          const data = await res.json();
+  // 1. Nouvel état pour les suggestions de villes
+const [villesPossibles, setVillesPossibles] = useState([]);
 
-          // L'API renvoie un tableau `features` -> prendre le premier élément
-          if (data && data.features && data.features.length > 0) {
-            const feat = data.features[0];
-            const villeDetectee = (feat.properties && (feat.properties.city || feat.properties.label)) || "";
-            if (villeDetectee) setFormData(prev => ({ ...prev, ville: villeDetectee }));
+// 2. useEffect mis à jour pour gérer la multiplicité
+useEffect(() => {
+  const chercherVilles = async () => {
+    // On déclenche la recherche à 5 chiffres
+    if (formData.cp && /^\d{5}$/.test(formData.cp)) {
+      try {
+        // On enlève "limit=1" pour avoir tous les résultats du CP
+        const res = await fetch(`https://api-adresse.data.gouv.fr/search/?q=${formData.cp}&type=municipality`);
+        const data = await res.json();
+
+        if (data.features && data.features.length > 0) {
+          const liste = data.features.map(f => f.properties.city);
+          
+          if (liste.length === 1) {
+            // Si une seule ville, on l'assigne direct
+            setFormData(prev => ({ ...prev, ville: liste }));
+            setVillesPossibles([]);
+          } else {
+            // Si plusieurs, on stocke la liste pour proposer le choix
+            setVillesPossibles(liste);
+            setFormData(prev => ({ ...prev, ville: "" })); // On vide pour forcer le choix
           }
-        } catch (err) {
-          console.error("Erreur lors de la détection de la ville :", err);
         }
-      } else if (formData.cp && formData.cp.length < 5) {
-        // Si le CP devient incomplet, on vide le champ ville
-        setFormData(prev => ({ ...prev, ville: "" }));
-      }
-    };
-    fetchVille();
-  }, [formData.cp]);
+      } catch (err) { console.error("Erreur API :", err); }
+    }
+  };
+  chercherVilles();
+}, [formData.cp]);
+
+// 3. Fonction pour sélectionner la ville dans la liste
+const choisirVille = (nomVille) => {
+  setFormData(prev => ({ ...prev, ville: nomVille }));
+  setVillesPossibles([]);
+};
 
   // --- 4. GESTION DES SAISIES CLASSIQUES ---
   const handleChange = (e) => {
@@ -120,10 +133,15 @@ export default function FormulaireProdacteur({ target, onSuccess, onCancel }) {
     }
   };
 
+    // Gestion de la touche "Entrée" pour éviter la soumission involontaire
+    const handleKeyDown = (e) => {
+      if (e.key === 'Enter' && e.target && e.target.tagName !== 'TEXTAREA') e.preventDefault();
+    };
+
   return (
     <form
       onSubmit={handleSubmit}
-      onKeyDown={(e) => { if (e.key === 'Enter' && e.target && e.target.tagName !== 'TEXTAREA') e.preventDefault(); }}
+      onKeyDown={handleKeyDown}
       className="form-admin-cers"
     >
       <header>
@@ -142,9 +160,24 @@ export default function FormulaireProdacteur({ target, onSuccess, onCancel }) {
           <label>Adresse (N° et Rue)</label>
           <input name="adresse" value={formData.adresse} onChange={handleChange} />
           
-          <div className="row-inline">
+          <div className="postal-row">
             <input name="cp" placeholder="Code Postal" value={formData.cp} onChange={handleChange} maxLength="5" />
-            <input name="ville" placeholder="Ville" value={formData.ville} readOnly className="readonly-input" />
+            <div className="ville-select-container">
+              <input
+                name="ville"
+                value={formData.ville}
+                readOnly
+                className={villesPossibles.length > 0 ? "field-warning" : "readonly-input"}
+                placeholder={villesPossibles.length > 0 ? "Choisissez ci-dessous..." : "Ville"}
+              />
+              {villesPossibles.length > 1 && (
+                <ul className="suggestions-villes">
+                  {villesPossibles.map((v, index) => (
+                    <li key={index} onClick={() => choisirVille(v)}>{v}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
           <small>La ville est détectée automatiquement via le code postal.</small>
         </article>

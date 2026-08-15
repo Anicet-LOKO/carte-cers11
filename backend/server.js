@@ -34,6 +34,17 @@ app.post('/api/prodacteurs', async (req, res) => {
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
   
   try {
+    // Vérification de doublon logique : même établissement + même CP
+    // on considère doublon si mail, tel et adresse sont tous identiques
+    const existe = await db.get('SELECT * FROM prodacteurs WHERE etablissement = ? AND cp = ?', p.etablissement, p.cp);
+    if (existe) {
+      const sameMail = (existe.mail || '') === (p.mail || '');
+      const sameTel = (existe.tel || '') === (p.tel || '');
+      const sameAddr = (existe.adresse || '') === (p.adresse || '');
+      if (sameMail && sameTel && sameAddr) {
+        return res.status(400).json({ error: "Doublon détecté : cet établissement avec les mêmes coordonnées existe déjà." });
+      }
+    }
     // Exécution de l'insertion avec les paramètres
     await db.run(sql, [
       p.etablissement, p.responsable, p.alimentation, p.centre_culturel, 
@@ -70,7 +81,9 @@ app.delete('/api/prodacteurs/:id', async (req, res) => {
 // 4. MODIFIER (PUT) - On met à jour une ligne existante par l'ID
 app.put('/api/prodacteurs/:id', async (req, res) => {
   const { id } = req.params;
+  const idNum = parseInt(id, 10);
   const p = req.body;
+  console.log(`PUT /api/prodacteurs/${idNum} payload:`, p);
   
   // Requête SQL pour mettre à jour tous les champs
   const sql = `UPDATE prodacteurs SET 
@@ -81,17 +94,30 @@ app.put('/api/prodacteurs/:id', async (req, res) => {
     WHERE id = ?`;
   
   try {
+    // Vérification de doublon logique lors de la modification :
+    // chercher un autre enregistrement avec même etablissement+cp
+    const autre = await db.get('SELECT * FROM prodacteurs WHERE etablissement = ? AND cp = ? AND id != ?', p.etablissement, p.cp, idNum);
+    if (autre) {
+      const sameMail = (autre.mail || '') === (p.mail || '');
+      const sameTel = (autre.tel || '') === (p.tel || '');
+      const sameAddr = (autre.adresse || '') === (p.adresse || '');
+      if (sameMail && sameTel && sameAddr) {
+        return res.status(400).json({ error: "Doublon détecté : une autre fiche identique existe déjà." });
+      }
+    }
     const result = await db.run(sql, [
       p.etablissement, p.responsable, p.alimentation, p.centre_culturel, 
       p.service, p.bien_etre, p.comptoir_echange, p.description, 
       p.tel, p.mail, p.liens, p.cp, p.ville, p.adresse, p.pourquoi_cers, p.lat, p.lng,
-      id
+      idNum
     ]);
 
     if (result.changes === 0) {
       return res.status(404).json({ error: "Prod'acteur non trouvé." });
     }
-    res.json({ message: "Mise à jour réussie dans SQLite !" });
+    // Récupérer et renvoyer l'enregistrement mis à jour pour confirmation
+    const updated = await db.get('SELECT * FROM prodacteurs WHERE id = ?', idNum);
+    res.json({ message: "Mise à jour réussie dans SQLite !", donnee: updated });
   } catch (err) {
     res.status(500).json({ error: "Erreur lors de la modification : " + err.message });
   }
