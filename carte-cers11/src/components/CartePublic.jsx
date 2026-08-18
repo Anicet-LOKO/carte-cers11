@@ -21,7 +21,8 @@ export default function App() {
   // On définit fetchData en dehors pour pouvoir la réutiliser après un ajout
   const fetchData = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/prodacteurs');
+      const API_URL = import.meta.env.VITE_API_URL || 'https://cers-backend.onrender.com';
+      const response = await fetch(`${API_URL}/api/prodacteurs`);
       if (!response.ok) throw new Error("Erreur lors de la récupération");
       const data = await response.json();
       setProdacteurs(data);

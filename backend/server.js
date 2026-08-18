@@ -3,7 +3,15 @@ import cors from 'cors';
 import setupDb from './database.js';
 
 const app = express();
-app.use(cors());
+const PORT = process.env.PORT || 5000;
+
+app.use(cors({
+  origin: [
+    'http://localhost:5173',
+    'https://cers-frontend.onrender.com'
+  ],
+  credentials: true
+}));
 app.use(express.json());
 
 let db;
@@ -12,7 +20,7 @@ setupDb()
   .then(database => {
     db = database;
     console.log('Serveur connecté à la base SQLite.');
-    app.listen(5000, () => console.log('Back-end CERS actif sur le port 5000'));
+    app.listen(PORT, () => console.log(`Back-end CERS actif sur le port ${PORT}`));
   })
   .catch(err => {
     console.error('Erreur de connexion à la base SQLite :', err);
