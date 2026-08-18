@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Trash2, Edit, PlusCircle, LogOut, ArrowLeft, CheckCircle, AlertTriangle } from 'lucide-react';
 import FormulaireProdacteur from './FormulaireProdacteur';
+import.meta.env.VITE_API_URL
 
 /**
  * COMPOSANT PRINCIPAL DE L'ADMINISTRATION
