@@ -1,6 +1,6 @@
-const express = require('express');
-const cors = require('cors');
-const setupDb = require('./database'); // On importe notre configurateur
+import express from 'express';
+import cors from 'cors';
+import setupDb from './database.js';
 
 const app = express();
 app.use(cors());
@@ -8,16 +8,25 @@ app.use(express.json());
 
 let db;
 
-// Connexion asynchrone à la base au démarrage du serveur
-setupDb().then(database => {
-  db = database;
-  console.log("Serveur connecté à la base SQLite.");
-});
+setupDb()
+  .then(database => {
+    db = database;
+    console.log('Serveur connecté à la base SQLite.');
+    app.listen(5000, () => console.log('Back-end CERS actif sur le port 5000'));
+  })
+  .catch(err => {
+    console.error('Erreur de connexion à la base SQLite :', err);
+    process.exit(1);
+  });
 
 // --- ROUTES API CRUD PERSISTANTES ---
 
 // 1. LIRE (GET) : On va chercher dans la table SQL
 app.get('/api/prodacteurs', async (req, res) => {
+  if (!db) {
+    return res.status(503).json({ error: 'Base de données non prête.' });
+  }
+
   try {
     const data = await db.all('SELECT * FROM prodacteurs');
     res.json(data);
@@ -26,6 +35,10 @@ app.get('/api/prodacteurs', async (req, res) => {
 
 // 2. CRÉER (POST) : On insère une nouvelle ligne SQL
 app.post('/api/prodacteurs', async (req, res) => {
+  if (!db) {
+    return res.status(503).json({ error: 'Base de données non prête.' });
+  }
+
   const p = req.body; // Récupère les données envoyées par le formulaire React
   
   // Requête SQL avec les 17 champs correspondant à ton fichier Excel
@@ -73,6 +86,10 @@ app.post('/api/prodacteurs', async (req, res) => {
 
 // 3. SUPPRIMER (DELETE) : On retire de la base par l'ID
 app.delete('/api/prodacteurs/:id', async (req, res) => {
+  if (!db) {
+    return res.status(503).json({ error: 'Base de données non prête.' });
+  }
+
   try {
     await db.run('DELETE FROM prodacteurs WHERE id = ?', req.params.id);
     res.json({ message: "Supprimé de la base SQLite." });
@@ -80,6 +97,10 @@ app.delete('/api/prodacteurs/:id', async (req, res) => {
 });
 // 4. MODIFIER (PUT) - On met à jour une ligne existante par l'ID
 app.put('/api/prodacteurs/:id', async (req, res) => {
+  if (!db) {
+    return res.status(503).json({ error: 'Base de données non prête.' });
+  }
+
   const { id } = req.params;
   const idNum = parseInt(id, 10);
   const p = req.body;
@@ -123,4 +144,3 @@ app.put('/api/prodacteurs/:id', async (req, res) => {
   }
 });
 
-app.listen(5000, () => console.log("Back-end CERS actif sur le port 5000"));

@@ -1,5 +1,10 @@
-const sqlite3 = require('sqlite3');
-const { open } = require('sqlite');
+import sqlite3 from 'sqlite3';
+import { open } from 'sqlite';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 /**
  * CONFIGURATION DE LA BASE DE DONNÉES SQLITE
@@ -7,7 +12,7 @@ const { open } = require('sqlite');
  */
 async function setupDb() {
   const db = await open({
-    filename: './prodacteurs.db',
+    filename: join(__dirname, 'prodacteurs.db'),
     driver: sqlite3.Database
   });
 
@@ -39,4 +44,4 @@ async function setupDb() {
   return db;
 }
 
-module.exports = setupDb;
+export default setupDb;

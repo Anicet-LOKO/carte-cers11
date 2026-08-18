@@ -7,7 +7,7 @@ geolocator = Nominatim(user_agent="cers_app_multicat")
 
 def generate_json():
     try:
-        df = pd.read_excel("liste_test.xlsx")
+        df = pd.read_excel("carte-cers11/liste_test.xlsx")
         df.columns = df.columns.str.strip()
     except FileNotFoundError:
         print("Erreur : le fichier 'liste_test.xlsx' est introuvable.")
@@ -76,7 +76,7 @@ def generate_json():
             "lng": lng
         })
 
-    with open('public/commerces-ordonnes.json', 'w', encoding='utf-8') as f:
+    with open('commerces-ordonnes.json', 'w', encoding='utf-8') as f:
         json.dump(commerces_propres, f, ensure_ascii=False, indent=4)
 
 if __name__ == "__main__":
