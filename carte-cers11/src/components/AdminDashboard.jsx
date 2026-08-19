@@ -30,12 +30,30 @@ export default function AdminDashboard({ prodacteurs, onLogout, onRefresh }) {
   };
 
   // Supprime un membre via l'API
-  const handleDelete = async (id) => {
-    if (window.confirm("Supprimer définitivement ce membre ?")) {
-      await fetch(`http://localhost:5000/api/prodacteurs/${id}`, { method: 'DELETE' });
-      onRefresh(); // On demande à App.jsx de recharger les données
+  // 1. Définition de l'URL de base (pour render)
+const API_BASE_URL = import.meta.env.VITE_API_URL || "https://cers-backend-8i3g.onrender.com";
+
+// Supprime un membre via l'API
+const handleDelete = async (id) => {
+  if (window.confirm("Supprimer définitivement ce membre ?")) {
+    try {
+      // 2. Utilisation des backticks pour construire l'URL de suppression
+      const res = await fetch(`\${API_BASE_URL}/api/prodacteurs/\${id}`, { 
+        method: 'DELETE' 
+      });
+
+      if (res.ok) {
+        alert("Membre supprimé avec succès.");
+        onRefresh(); // On demande à App.jsx de recharger les données
+      } else {
+        alert(`Erreur lors de la suppression (\${res.status})`);
+      }
+    } catch (err) {
+      console.error("Erreur suppression :", err);
+      alert("Erreur réseau lors de la suppression : " + err.message);
     }
-  };
+  }
+};
 
   // --- 3. RENDU DE L'INTERFACE (SÉMANTIQUE HTML5) ---
   return (

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Save, XCircle, Search } from 'lucide-react';
-
+import.meta.env.VITE_API_URL
 /**
  * COMPOSANT FORMULAIRE DE GESTION DES PROD'ACTEURS
  * Ce formulaire gère l'ajout et la modification avec géocodage et 
@@ -108,27 +108,40 @@ const choisirVille = (nomVille) => {
         console.warn('Géocodage échoué pour :', fullAddr, fallbackAddr, cityOnlyAddr);
       }
 
-      const url = target ? `http://localhost:5000/api/prodacteurs/${target.id}` : 'http://localhost:5000/api/prodacteurs';
-      const res = await fetch(url, {
-        method: target ? 'PUT' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, ...coords })
-      });
+      // On définit l'URL de base dynamiquement pour render
+      const API_BASE_URL = import.meta.env.VITE_API_URL || "https://cers-backend-8i3g.onrender.com";
 
-      if (res.ok) {
-        try { await res.json(); } catch (_) {}
-        alert('Enregistrement effectué.');
-        if (typeof onSuccess === 'function') onSuccess();
-      } else {
-        let text = '';
-        try { text = await res.text(); } catch (_) {}
-        alert(`Erreur lors de l'enregistrement (${res.status}): ${text}`);
-        console.error('Enregistrement failed', res.status, text);
+      try {
+        // 2. On construit l'url finale en utilisant les littéraux de gabarits (backticks)
+        const url = target 
+          ? `${API_BASE_URL}/api/prodacteurs/${target.id}` 
+          : `${API_BASE_URL}/api/prodacteurs`;
+
+        const res = await fetch(url, {
+          method: target ? 'PUT' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...formData, ...coords })
+        });
+
+        if (res.ok) {
+          try { await res.json(); } catch (e) { console.error(e); }
+          alert('Enregistrement effectué.');
+          if (typeof onSuccess === 'function') onSuccess();
+        } else {
+          let text = '';
+          try { text = await res.text(); } catch (error) { console.error(error); }
+          alert(`Erreur lors de l'enregistrement (${res.status}): ${text}`);
+          console.error('Enregistrement failed', res.status, text);
+        }
+      } catch (err) {
+        console.error("Erreur soumission :", err);
+        alert('Erreur réseau lors de l envoi : ' + err.message);
+      } finally {
+        setIsSubmitting(false);
       }
     } catch (err) {
-      console.error("Erreur soumission :", err);
-      alert('Erreur réseau lors de l envoi : ' + err.message);
-    } finally {
+      console.error("Erreur géocodage :", err);
+      alert('Erreur lors du géocodage : ' + err.message);
       setIsSubmitting(false);
     }
   };
