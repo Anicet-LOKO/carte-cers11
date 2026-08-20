@@ -1,0 +1,4 @@
+-- Run this once in the Supabase SQL editor.
+ALTER TABLE prodacteurs
+  ADD COLUMN IF NOT EXISTS lat DOUBLE PRECISION,
+  ADD COLUMN IF NOT EXISTS lng DOUBLE PRECISION;

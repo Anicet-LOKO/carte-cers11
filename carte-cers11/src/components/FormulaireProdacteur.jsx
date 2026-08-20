@@ -41,7 +41,7 @@ useEffect(() => {
           
           if (liste.length === 1) {
             // Si une seule ville, on l'assigne direct
-            setFormData(prev => ({ ...prev, ville: liste }));
+            setFormData(prev => ({ ...prev, ville: liste[0] }));
             setVillesPossibles([]);
           } else {
             // Si plusieurs, on stocke la liste pour proposer le choix

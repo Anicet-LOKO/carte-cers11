@@ -38,7 +38,7 @@ const handleDelete = async (id) => {
   if (window.confirm("Supprimer définitivement ce membre ?")) {
     try {
       // 2. Utilisation des backticks pour construire l'URL de suppression
-      const res = await fetch(`\${API_BASE_URL}/api/prodacteurs/\${id}`, { 
+      const res = await fetch(`${API_BASE_URL}/api/prodacteurs/${id}`, { 
         method: 'DELETE' 
       });
 
@@ -46,7 +46,7 @@ const handleDelete = async (id) => {
         alert("Membre supprimé avec succès.");
         onRefresh(); // On demande à App.jsx de recharger les données
       } else {
-        alert(`Erreur lors de la suppression (\${res.status})`);
+        alert(`Erreur lors de la suppression (${res.status})`);
       }
     } catch (err) {
       console.error("Erreur suppression :", err);

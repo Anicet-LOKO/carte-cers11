@@ -1,6 +1,8 @@
-const express = require('express');
-const cors = require('cors');
-const { Pool } = require('pg'); // On utilise 'pg' (le module classique PostgreSQL)
+import express from 'express';
+import cors from 'cors';
+import pg from 'pg'; // On utilise 'pg' (le module classique PostgreSQL)
+
+const { Pool } = pg;
 
 const app = express();
 app.use(cors());
@@ -31,7 +33,7 @@ app.post('/api/prodacteurs', async (req, res) => {
   const { 
     responsable, etablissement, centre_culturel, alimentation, 
     service, bien_etre, comptoir_echange, description, 
-    tel, liens, mail, cp, ville, adresse, pourquoi_cers 
+    tel, liens, mail, cp, ville, adresse, pourquoi_cers, lat, lng
   } = req.body;
   
   try {
@@ -39,9 +41,9 @@ app.post('/api/prodacteurs', async (req, res) => {
       INSERT INTO prodacteurs (
         responsable, etablissement, centre_culturel, alimentation, 
         service, bien_etre, comptoir_echange, description, 
-        tel, liens, mail, cp, ville, adresse, pourquoi_cers
+        tel, liens, mail, cp, ville, adresse, pourquoi_cers, lat, lng
       )
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
       RETURNING *;
     `;
     
@@ -62,7 +64,9 @@ app.post('/api/prodacteurs', async (req, res) => {
       cp !== undefined ? cp : null,
       ville !== undefined ? ville : null,
       adresse !== undefined ? adresse : null,
-      pourquoi_cers !== undefined ? pourquoi_cers : null
+      pourquoi_cers !== undefined ? pourquoi_cers : null,
+      lat !== undefined ? lat : null,
+      lng !== undefined ? lng : null
     ];
     
     const result = await pool.query(queryText, values);
@@ -80,7 +84,7 @@ app.put('/api/prodacteurs/:id', async (req, res) => {
   const { 
     responsable, etablissement, centre_culturel, alimentation, 
     service, bien_etre, comptoir_echange, description, 
-    tel, liens, mail, cp, ville, adresse, pourquoi_cers 
+    tel, liens, mail, cp, ville, adresse, pourquoi_cers, lat, lng
   } = req.body;
   
   try {
@@ -101,8 +105,10 @@ app.put('/api/prodacteurs/:id', async (req, res) => {
         cp = $12, 
         ville = $13, 
         adresse = $14, 
-        pourquoi_cers = $15
-      WHERE id = $16
+        pourquoi_cers = $15,
+        lat = $16,
+        lng = $17
+      WHERE id = $18
       RETURNING *;
     `;
     
@@ -123,7 +129,9 @@ app.put('/api/prodacteurs/:id', async (req, res) => {
       ville !== undefined ? ville : null,
       adresse !== undefined ? adresse : null,
       pourquoi_cers !== undefined ? pourquoi_cers : null,
-      id // 16ème paramètre ($16)
+      lat !== undefined ? lat : null,
+      lng !== undefined ? lng : null,
+      id // 18ème paramètre ($18)
     ];
     
     const result = await pool.query(queryText, values);
