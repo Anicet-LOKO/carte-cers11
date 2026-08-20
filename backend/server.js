@@ -1,8 +1,6 @@
-import express from 'express';
-import cors from 'cors';
-import pg from 'pg'; // On utilise 'pg' (le module classique PostgreSQL) au lieu de sqlite3
-
-const { Pool } = pg;
+const express = require('express');
+const cors = require('cors');
+const { Pool } = require('pg'); // On utilise 'pg' (le module classique PostgreSQL)
 
 const app = express();
 app.use(cors());
@@ -19,7 +17,6 @@ const pool = new Pool({
 // ROUTE 1 : Récupérer tous les prodacteurs (GET)
 app.get('/api/prodacteurs', async (req, res) => {
   try {
-    // Requête classique pour récupérer la liste par ordre alphabétique
     const result = await pool.query('SELECT * FROM prodacteurs ORDER BY etablissement ASC');
     res.json(result.rows);
   } catch (err) {
@@ -38,7 +35,6 @@ app.post('/api/prodacteurs', async (req, res) => {
   } = req.body;
   
   try {
-    // Requête préparée standard avec les paramètres sécurisés $1, $2, etc.
     const queryText = `
       INSERT INTO prodacteurs (
         responsable, etablissement, centre_culturel, alimentation, 
@@ -49,24 +45,38 @@ app.post('/api/prodacteurs', async (req, res) => {
       RETURNING *;
     `;
     
-    // Tableau ordonné correspondant aux variables $1 à $15
+    // SÉCURITÉ : On vérifie chaque variable. Si elle est 'undefined', 
+    // on la remplace par 'null' ou par sa valeur par défaut ('Non').
     const values = [
-      responsable, etablissement, centre_culturel, alimentation, 
-      service, bien_etre, comptoir_echange, description, 
-      tel, liens, mail, cp, ville, adresse, pourquoi_cers
+      responsable !== undefined ? responsable : null,
+      etablissement !== undefined ? etablissement : null,
+      centre_culturel !== undefined ? centre_culturel : 'Non',
+      alimentation !== undefined ? alimentation : 'Non',
+      service !== undefined ? service : 'Non',
+      bien_etre !== undefined ? bien_etre : 'Non',
+      comptoir_echange !== undefined ? comptoir_echange : 'Non',
+      description !== undefined ? description : null,
+      tel !== undefined ? tel : null,
+      liens !== undefined ? liens : null,
+      mail !== undefined ? mail : null,
+      cp !== undefined ? cp : null,
+      ville !== undefined ? ville : null,
+      adresse !== undefined ? adresse : null,
+      pourquoi_cers !== undefined ? pourquoi_cers : null
     ];
     
     const result = await pool.query(queryText, values);
     res.status(201).json(result.rows); // Renvoie l'élément inséré
   } catch (err) {
-    console.error("Erreur lors de l'insertion :", err);
+    // Très important : on affiche l'erreur SQL exacte dans les logs de Render pour pouvoir débugger !
+    console.error("Erreur SQL lors de l'insertion :", err);
     res.status(500).send("Erreur lors de l'enregistrement");
   }
 });
 
 // ROUTE 3 : Modifier un prodacteur existant (PUT)
 app.put('/api/prodacteurs/:id', async (req, res) => {
-  const { id } = req.params; // L'identifiant dans l'URL (ex: /api/prodacteurs/2)
+  const { id } = req.params;
   const { 
     responsable, etablissement, centre_culturel, alimentation, 
     service, bien_etre, comptoir_echange, description, 
@@ -74,7 +84,6 @@ app.put('/api/prodacteurs/:id', async (req, res) => {
   } = req.body;
   
   try {
-    // Requête préparée de mise à jour ciblée grâce à "WHERE id = $16"
     const queryText = `
       UPDATE prodacteurs 
       SET 
@@ -97,11 +106,24 @@ app.put('/api/prodacteurs/:id', async (req, res) => {
       RETURNING *;
     `;
     
+    // SÉCURITÉ : Même nettoyage pour la modification
     const values = [
-      responsable, etablissement, centre_culturel, alimentation, 
-      service, bien_etre, comptoir_echange, description, 
-      tel, liens, mail, cp, ville, adresse, pourquoi_cers,
-      id // C'est notre 16ème paramètre ($16)
+      responsable !== undefined ? responsable : null,
+      etablissement !== undefined ? etablissement : null,
+      centre_culturel !== undefined ? centre_culturel : 'Non',
+      alimentation !== undefined ? alimentation : 'Non',
+      service !== undefined ? service : 'Non',
+      bien_etre !== undefined ? bien_etre : 'Non',
+      comptoir_echange !== undefined ? comptoir_echange : 'Non',
+      description !== undefined ? description : null,
+      tel !== undefined ? tel : null,
+      liens !== undefined ? liens : null,
+      mail !== undefined ? mail : null,
+      cp !== undefined ? cp : null,
+      ville !== undefined ? ville : null,
+      adresse !== undefined ? adresse : null,
+      pourquoi_cers !== undefined ? pourquoi_cers : null,
+      id // 16ème paramètre ($16)
     ];
     
     const result = await pool.query(queryText, values);
@@ -112,7 +134,7 @@ app.put('/api/prodacteurs/:id', async (req, res) => {
     
     res.json(result.rows);
   } catch (err) {
-    console.error("Erreur lors de la modification :", err);
+    console.error("Erreur SQL lors de la modification :", err);
     res.status(500).send("Erreur lors de la modification");
   }
 });
@@ -130,7 +152,6 @@ app.delete('/api/prodacteurs/:id', async (req, res) => {
   }
 });
 
-// Écoute du serveur sur le port de Render (10000) ou 5000 en local
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
   console.log(`Back-end actif sur le port ${PORT}`);
