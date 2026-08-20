@@ -1,155 +1,137 @@
 import express from 'express';
 import cors from 'cors';
-import setupDb from './database.js';
+import pg from 'pg'; // On utilise 'pg' (le module classique PostgreSQL) au lieu de sqlite3
+
+const { Pool } = pg;
 
 const app = express();
-const PORT = process.env.PORT || 5000;
-
-app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'https://cers-frontend.onrender.com',
-    'https://cers-frontend.onrender.com/'
-  ],
-  credentials: true
-}));
+app.use(cors());
 app.use(express.json());
 
-let db;
+// Connexion à la base de données Supabase PostgreSQL
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false // Obligatoire pour sécuriser la connexion avec les serveurs de Supabase
+  }
+});
 
-setupDb()
-  .then(database => {
-    db = database;
-    console.log('Serveur connecté à la base SQLite.');
-    app.listen(PORT, () => console.log(`Back-end CERS actif sur le port ${PORT}`));
-  })
-  .catch(err => {
-    console.error('Erreur de connexion à la base SQLite :', err);
-    process.exit(1);
-  });
-
-// --- ROUTES API CRUD PERSISTANTES ---
-
-// 1. LIRE (GET) : On va chercher dans la table SQL
+// ROUTE 1 : Récupérer tous les prodacteurs (GET)
 app.get('/api/prodacteurs', async (req, res) => {
-  if (!db) {
-    return res.status(503).json({ error: 'Base de données non prête.' });
-  }
-
   try {
-    const data = await db.all('SELECT * FROM prodacteurs');
-    res.json(data);
-  } catch (err) { res.status(500).json({ error: err.message }); }
+    // Requête classique pour récupérer la liste par ordre alphabétique
+    const result = await pool.query('SELECT * FROM prodacteurs ORDER BY etablissement ASC');
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Erreur lors de la récupération :", err);
+    res.status(500).send('Erreur lors de la récupération des données');
+  }
 });
 
-// 2. CRÉER (POST) : On insère une nouvelle ligne SQL
+// ROUTE 2 : Ajouter un nouveau prodacteur (POST)
 app.post('/api/prodacteurs', async (req, res) => {
-  if (!db) {
-    return res.status(503).json({ error: 'Base de données non prête.' });
-  }
-
-  const p = req.body; // Récupère les données envoyées par le formulaire React
-  
-  // Requête SQL avec les 17 champs correspondant à ton fichier Excel
-  const sql = `INSERT INTO prodacteurs 
-    (etablissement, responsable, alimentation, centre_culturel, service, bien_etre, comptoir_echange, description, tel, mail, liens, cp, ville, adresse, pourquoi_cers, lat, lng)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+  // Récupération des données envoyées par le formulaire React
+  const { 
+    responsable, etablissement, centre_culturel, alimentation, 
+    service, bien_etre, comptoir_echange, description, 
+    tel, liens, mail, cp, ville, adresse, pourquoi_cers 
+  } = req.body;
   
   try {
-    // Vérification de doublon logique : même établissement + même CP
-    // on considère doublon si mail, tel et adresse sont tous identiques
-    const existe = await db.get('SELECT * FROM prodacteurs WHERE etablissement = ? AND cp = ?', p.etablissement, p.cp);
-    if (existe) {
-      const sameMail = (existe.mail || '') === (p.mail || '');
-      const sameTel = (existe.tel || '') === (p.tel || '');
-      const sameAddr = (existe.adresse || '') === (p.adresse || '');
-      if (sameMail && sameTel && sameAddr) {
-        return res.status(400).json({ error: "Doublon détecté : cet établissement avec les mêmes coordonnées existe déjà." });
-      }
-    }
-    // Exécution de l'insertion avec les paramètres
-    await db.run(sql, [
-      p.etablissement, p.responsable, p.alimentation, p.centre_culturel, 
-      p.service, p.bien_etre, p.comptoir_echange, p.description, 
-      p.tel, p.mail, p.liens, p.cp, p.ville, p.adresse, p.pourquoi_cers, p.lat, p.lng
-    ]);
-
-    // Code 201 : Ressource créée avec succès
-    res.status(201).json({ message: "Prod'acteur ajouté avec succès dans le fichier .db !" });
-
+    // Requête préparée standard avec les paramètres sécurisés $1, $2, etc.
+    const queryText = `
+      INSERT INTO prodacteurs (
+        responsable, etablissement, centre_culturel, alimentation, 
+        service, bien_etre, comptoir_echange, description, 
+        tel, liens, mail, cp, ville, adresse, pourquoi_cers
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+      RETURNING *;
+    `;
+    
+    // Tableau ordonné correspondant aux variables $1 à $15
+    const values = [
+      responsable, etablissement, centre_culturel, alimentation, 
+      service, bien_etre, comptoir_echange, description, 
+      tel, liens, mail, cp, ville, adresse, pourquoi_cers
+    ];
+    
+    const result = await pool.query(queryText, values);
+    res.status(201).json(result.rows); // Renvoie l'élément inséré
   } catch (err) {
-    // --- SÉCURITÉ : GESTION DES DOUBLONS ---
-    // Si SQLite renvoie une erreur de contrainte UNIQUE (Nom + Adresse + CP)
-    if (err.message.includes("UNIQUE constraint failed")) {
-      console.warn("Tentative d'ajout d'un doublon :", p.etablissement);
-      return res.status(400).json({ 
-        error: "Cet établissement est déjà enregistré à cette adresse dans le réseau CERS." 
-      });
-    }
-
-    // Gestion des autres erreurs techniques (Code 500)
-    console.error("Erreur SQL lors du POST :", err.message);
-    res.status(500).json({ error: "Une erreur interne est survenue lors de l'enregistrement." });
+    console.error("Erreur lors de l'insertion :", err);
+    res.status(500).send("Erreur lors de l'enregistrement");
   }
 });
 
-// 3. SUPPRIMER (DELETE) : On retire de la base par l'ID
-app.delete('/api/prodacteurs/:id', async (req, res) => {
-  if (!db) {
-    return res.status(503).json({ error: 'Base de données non prête.' });
-  }
-
-  try {
-    await db.run('DELETE FROM prodacteurs WHERE id = ?', req.params.id);
-    res.json({ message: "Supprimé de la base SQLite." });
-  } catch (err) { res.status(500).json({ error: err.message }); }
-});
-// 4. MODIFIER (PUT) - On met à jour une ligne existante par l'ID
+// ROUTE 3 : Modifier un prodacteur existant (PUT)
 app.put('/api/prodacteurs/:id', async (req, res) => {
-  if (!db) {
-    return res.status(503).json({ error: 'Base de données non prête.' });
-  }
-
-  const { id } = req.params;
-  const idNum = parseInt(id, 10);
-  const p = req.body;
-  console.log(`PUT /api/prodacteurs/${idNum} payload:`, p);
-  
-  // Requête SQL pour mettre à jour tous les champs
-  const sql = `UPDATE prodacteurs SET 
-    etablissement = ?, responsable = ?, alimentation = ?, centre_culturel = ?, 
-    service = ?, bien_etre = ?, comptoir_echange = ?, description = ?, 
-    tel = ?, mail = ?, liens = ?, cp = ?, ville = ?, adresse = ?, 
-    pourquoi_cers = ?, lat = ?, lng = ? 
-    WHERE id = ?`;
+  const { id } = req.params; // L'identifiant dans l'URL (ex: /api/prodacteurs/2)
+  const { 
+    responsable, etablissement, centre_culturel, alimentation, 
+    service, bien_etre, comptoir_echange, description, 
+    tel, liens, mail, cp, ville, adresse, pourquoi_cers 
+  } = req.body;
   
   try {
-    // Vérification de doublon logique lors de la modification :
-    // chercher un autre enregistrement avec même etablissement+cp
-    const autre = await db.get('SELECT * FROM prodacteurs WHERE etablissement = ? AND cp = ? AND id != ?', p.etablissement, p.cp, idNum);
-    if (autre) {
-      const sameMail = (autre.mail || '') === (p.mail || '');
-      const sameTel = (autre.tel || '') === (p.tel || '');
-      const sameAddr = (autre.adresse || '') === (p.adresse || '');
-      if (sameMail && sameTel && sameAddr) {
-        return res.status(400).json({ error: "Doublon détecté : une autre fiche identique existe déjà." });
-      }
+    // Requête préparée de mise à jour ciblée grâce à "WHERE id = $16"
+    const queryText = `
+      UPDATE prodacteurs 
+      SET 
+        responsable = $1, 
+        etablissement = $2, 
+        centre_culturel = $3, 
+        alimentation = $4, 
+        service = $5, 
+        bien_etre = $6, 
+        comptoir_echange = $7, 
+        description = $8, 
+        tel = $9, 
+        liens = $10, 
+        mail = $11, 
+        cp = $12, 
+        ville = $13, 
+        adresse = $14, 
+        pourquoi_cers = $15
+      WHERE id = $16
+      RETURNING *;
+    `;
+    
+    const values = [
+      responsable, etablissement, centre_culturel, alimentation, 
+      service, bien_etre, comptoir_echange, description, 
+      tel, liens, mail, cp, ville, adresse, pourquoi_cers,
+      id // C'est notre 16ème paramètre ($16)
+    ];
+    
+    const result = await pool.query(queryText, values);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).send("Prodacteur non trouvé");
     }
-    const result = await db.run(sql, [
-      p.etablissement, p.responsable, p.alimentation, p.centre_culturel, 
-      p.service, p.bien_etre, p.comptoir_echange, p.description, 
-      p.tel, p.mail, p.liens, p.cp, p.ville, p.adresse, p.pourquoi_cers, p.lat, p.lng,
-      idNum
-    ]);
-
-    if (result.changes === 0) {
-      return res.status(404).json({ error: "Prod'acteur non trouvé." });
-    }
-    // Récupérer et renvoyer l'enregistrement mis à jour pour confirmation
-    const updated = await db.get('SELECT * FROM prodacteurs WHERE id = ?', idNum);
-    res.json({ message: "Mise à jour réussie dans SQLite !", donnee: updated });
+    
+    res.json(result.rows);
   } catch (err) {
-    res.status(500).json({ error: "Erreur lors de la modification : " + err.message });
+    console.error("Erreur lors de la modification :", err);
+    res.status(500).send("Erreur lors de la modification");
   }
 });
 
+// ROUTE 4 : Supprimer un prodacteur (DELETE)
+app.delete('/api/prodacteurs/:id', async (req, res) => {
+  const { id } = req.params;
+  
+  try {
+    await pool.query('DELETE FROM prodacteurs WHERE id = $1', [id]);
+    res.status(200).send('Membre supprimé avec succès');
+  } catch (err) {
+    console.error("Erreur lors de la suppression :", err);
+    res.status(500).send('Erreur lors de la suppression');
+  }
+});
+
+// Écoute du serveur sur le port de Render (10000) ou 5000 en local
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => {
+  console.log(`Back-end actif sur le port ${PORT}`);
+});

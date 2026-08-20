@@ -9,15 +9,27 @@ export default function App() {
   const [prodacteurs, setProdacteurs] = useState([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  const fetchData = async () => {
+    const fetchData = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/prodacteurs');
+      // 1. On définit l'URL de l'API dynamiquement
+      const API_BASE_URL = import.meta.env.VITE_API_URL || "https://cers-backend-8i3g.onrender.com";
+      
+      // 2. On fait l'appel fetch avec l'URL dynamique
+      const res = await fetch(`${API_BASE_URL}/api/prodacteurs`);
       const data = await res.json();
       setProdacteurs(data);
-    } catch (err) { console.error("Erreur serveur :", err); }
+    } catch (err) { 
+      console.error("Erreur serveur :", err); 
+    }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      void fetchData();
+    }, 0);
+
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   return (
     <div className="app-main-wrapper">
