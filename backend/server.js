@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import pg from 'pg'; // On utilise 'pg' (le module classique PostgreSQL)
+import pg from 'pg';
 
 const { Pool } = pg;
 
@@ -9,31 +9,62 @@ app.use(cors());
 app.use(express.json());
 
 // Connexion à la base de données Supabase PostgreSQL
+const databaseUrl = process.env.DATABASE_URL;
+
+if (!databaseUrl) {
+  console.error('DATABASE_URL est absente. Configurez la chaîne de connexion PostgreSQL avant de démarrer le backend.');
+  process.exit(1);
+}
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: databaseUrl,
   ssl: {
-    rejectUnauthorized: false // Obligatoire pour sécuriser la connexion avec les serveurs de Supabase
+    rejectUnauthorized: false // Obligatoire pour sécuriser la connexion avec Supabase
   }
 });
 
+app.get('/api/health', async (req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    res.json({ status: 'ok', database: 'connected' });
+  } catch (err) {
+    console.error('Erreur de connexion PostgreSQL :', {
+      message: err.message,
+      code: err.code,
+      detail: err.detail,
+      hint: err.hint
+    });
+    res.status(503).json({ status: 'error', database: 'unavailable' });
+  }
+});
+
+// =========================================================================
 // ROUTE 1 : Récupérer tous les prodacteurs (GET)
+// =========================================================================
 app.get('/api/prodacteurs', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM prodacteurs ORDER BY etablissement ASC');
     res.json(result.rows);
   } catch (err) {
-    console.error("Erreur lors de la récupération :", err);
+    console.error("Erreur lors de la récupération :", {
+      message: err.message,
+      code: err.code,
+      detail: err.detail,
+      hint: err.hint
+    });
     res.status(500).send('Erreur lors de la récupération des données');
   }
 });
 
+// =========================================================================
 // ROUTE 2 : Ajouter un nouveau prodacteur (POST)
+// =========================================================================
 app.post('/api/prodacteurs', async (req, res) => {
-  // Récupération des données envoyées par le formulaire React
   const { 
     responsable, etablissement, centre_culturel, alimentation, 
     service, bien_etre, comptoir_echange, description, 
-    tel, liens, mail, cp, ville, adresse, pourquoi_cers, lat, lng
+    tel, liens, mail, cp, ville, adresse, pourquoi_cers,
+    lat, lng // On destructure les coordonnées envoyées par React
   } = req.body;
   
   try {
@@ -41,14 +72,13 @@ app.post('/api/prodacteurs', async (req, res) => {
       INSERT INTO prodacteurs (
         responsable, etablissement, centre_culturel, alimentation, 
         service, bien_etre, comptoir_echange, description, 
-        tel, liens, mail, cp, ville, adresse, pourquoi_cers, lat, lng
+        tel, liens, mail, cp, ville, adresse, pourquoi_cers,
+        lat, lng
       )
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
       RETURNING *;
     `;
     
-    // SÉCURITÉ : On vérifie chaque variable. Si elle est 'undefined', 
-    // on la remplace par 'null' ou par sa valeur par défaut ('Non').
     const values = [
       responsable !== undefined ? responsable : null,
       etablissement !== undefined ? etablissement : null,
@@ -65,26 +95,33 @@ app.post('/api/prodacteurs', async (req, res) => {
       ville !== undefined ? ville : null,
       adresse !== undefined ? adresse : null,
       pourquoi_cers !== undefined ? pourquoi_cers : null,
-      lat !== undefined ? lat : null,
-      lng !== undefined ? lng : null
+      lat !== undefined && lat !== null ? parseFloat(lat) : null, // On s'assure que c'est un nombre décimal pour Postgres
+      lng !== undefined && lng !== null ? parseFloat(lng) : null
     ];
     
     const result = await pool.query(queryText, values);
-    res.status(201).json(result.rows); // Renvoie l'élément inséré
+    res.status(201).json(result.rows);
   } catch (err) {
-    // Très important : on affiche l'erreur SQL exacte dans les logs de Render pour pouvoir débugger !
-    console.error("Erreur SQL lors de l'insertion :", err);
+    console.error("Erreur SQL lors de l'insertion :", {
+      message: err.message,
+      code: err.code,
+      detail: err.detail,
+      hint: err.hint
+    });
     res.status(500).send("Erreur lors de l'enregistrement");
   }
 });
 
+// =========================================================================
 // ROUTE 3 : Modifier un prodacteur existant (PUT)
+// =========================================================================
 app.put('/api/prodacteurs/:id', async (req, res) => {
   const { id } = req.params;
   const { 
     responsable, etablissement, centre_culturel, alimentation, 
     service, bien_etre, comptoir_echange, description, 
-    tel, liens, mail, cp, ville, adresse, pourquoi_cers, lat, lng
+    tel, liens, mail, cp, ville, adresse, pourquoi_cers,
+    lat, lng
   } = req.body;
   
   try {
@@ -112,7 +149,6 @@ app.put('/api/prodacteurs/:id', async (req, res) => {
       RETURNING *;
     `;
     
-    // SÉCURITÉ : Même nettoyage pour la modification
     const values = [
       responsable !== undefined ? responsable : null,
       etablissement !== undefined ? etablissement : null,
@@ -129,9 +165,9 @@ app.put('/api/prodacteurs/:id', async (req, res) => {
       ville !== undefined ? ville : null,
       adresse !== undefined ? adresse : null,
       pourquoi_cers !== undefined ? pourquoi_cers : null,
-      lat !== undefined ? lat : null,
-      lng !== undefined ? lng : null,
-      id // 18ème paramètre ($18)
+      lat !== undefined && lat !== null ? parseFloat(lat) : null,
+      lng !== undefined && lng !== null ? parseFloat(lng) : null,
+      id
     ];
     
     const result = await pool.query(queryText, values);
@@ -147,10 +183,11 @@ app.put('/api/prodacteurs/:id', async (req, res) => {
   }
 });
 
+// =========================================================================
 // ROUTE 4 : Supprimer un prodacteur (DELETE)
+// =========================================================================
 app.delete('/api/prodacteurs/:id', async (req, res) => {
   const { id } = req.params;
-  
   try {
     await pool.query('DELETE FROM prodacteurs WHERE id = $1', [id]);
     res.status(200).send('Membre supprimé avec succès');

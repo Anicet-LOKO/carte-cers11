@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { User, Phone, Mail, MapPin, Navigation, Search, Info, ExternalLink, PlusCircle, X } from 'lucide-react';
 import FormulaireProdacteur from './FormulaireProdacteur';
 import '../App.css';
-import.meta.env.VITE_API_URL
 
 export default function App() {
   // --- SECTION 1 : ÉTATS (STATE) ---
@@ -22,7 +21,7 @@ export default function App() {
   // On définit fetchData en dehors pour pouvoir la réutiliser après un ajout
   const fetchData = async () => {
     try {
-      const API_URL = (import.meta.env.VITE_API_URL || 'https://cers-backend-8i3g.onrender.com').replace(/\/$/, '');
+      const API_URL = import.meta.env.VITE_API_URL || 'https://cers-backend.onrender.com';
       const response = await fetch(`${API_URL}/api/prodacteurs`);
       if (!response.ok) throw new Error("Erreur lors de la récupération");
       const data = await response.json();
