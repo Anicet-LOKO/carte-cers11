@@ -33,16 +33,23 @@ export default function App() {
   };
 
   // Initialisation de la carte et premier chargement
-  useEffect(() => {
-    if (!window.L) return;
-    if (!mapInstance.current && mapRef.current) {
-      mapInstance.current = window.L.map(mapRef.current).setView([43.18, 3.0], 11);
-      window.L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap'
-      }).addTo(mapInstance.current);
-    }
-    fetchData();
-  }, []);
+useEffect(() => {
+  // Vérification de la disponibilité de Leaflet dans la fenêtre
+  if (!window.L) return;
+
+  // Création de la carte si elle n'existe pas encore
+  if (!mapInstance.current && mapRef.current) {
+    mapInstance.current = window.L.map(mapRef.current).setView([43.18, 3.0], 11);
+
+    // Fond de carte gratuit OpenStreetMap (pour resoudre le pb d'affichage API KEY REQUIRED après deployement)
+    window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(mapInstance.current);
+  }
+
+  // Chargement des données au montage du composant
+  fetchData();
+}, []);
 
   // --- SECTION 4 : LOGIQUE DE FILTRAGE ---
   const mainCategories = ["Tous", "Alimentation", "Centre Culturel", "Service", "Bien-Etre", "Comptoir d'Echange"];
